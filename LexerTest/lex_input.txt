@@ -3,6 +3,8 @@ int num1, num2, large$
 if(num1 > num2)
 {
 	large = num1$;
+	test = 200
+	test 2 = 200.50
 }
 else
 {

@@ -6,6 +6,8 @@ using namespace std;
 
 #define FILE_ERROR 2
 
+
+//Bool functions to test what input is read in
 bool isAlpha(char inputChar) {
 	if (inputChar == 'A' || inputChar == 'B' || inputChar == 'C' || inputChar == 'D' || inputChar == 'E' || inputChar == 'F' || inputChar == 'G' || inputChar == 'H' ||
 		inputChar == 'I' || inputChar == 'J' || inputChar == 'K' || inputChar == 'L' || inputChar == 'M' || inputChar == 'N' || inputChar == 'O' || inputChar == 'P' ||
@@ -53,39 +55,39 @@ bool isOperator(char inputChar) {
 		return false;
 }
 
-bool isKeyword(string inputString) {//fix this shit with compares
+bool isKeyword(string inputString) {
 	if (inputString.compare("int")==0 || inputString.compare("if")== 0 || inputString.compare("else")==0 || inputString.compare("while") == 0 || inputString.compare("whileend") == 0 ||
 		inputString.compare("float") == 0|| inputString.compare("double") == 0 || inputString.compare("real") == 0) {
 		return true;
 	}
 	else
 		return false;
-}//.compare for string
+}
 
 
-
+//Struct defining a lexRecord
 struct lexRecord {
 	string token;
 	string lexeme;
 };
 
 
-
-
+//Class to create a list of lexRecords
 class lexerTable {
 public:
 
 	/*
 	State 0 = Building new record
 	State 1 = Reading through comment
-	State 2 = Reading an alpha for identifier
-	State 3 = Encountered separator
-	State X = Reading numeric
-	State 4 = Encountered operator
-	State 6 = Encountered keyword
-	State 7 = Encountered identifier
+	State 2 = Reading an alpha
+	State 3 = Reading numeric
+	State 4 = Encountered separator
+	State 5 = Encountered operator
+
+	TODO: Remove cout testing statements; Create export function of recordTable
 	*/
 
+	//Use lexer func with fileName to generate a list of lexRecords
 	void lexer(string fileName) {
 		//Open and validates input file
 		ifstream inputFile;
@@ -116,7 +118,8 @@ public:
 			inputToString.append(token);
 			
 		}
-		cout << inputToString << endl;
+
+		//cout << inputToString << endl;//Use to see full input
 		
 
 		lexArraySize = inputToString.length();
@@ -127,77 +130,142 @@ public:
 		START:
 			lexState = 0;
 			lexBuilder.clear();
+
+
 			//Check if reading in a comment; Iterate through comment portion; Do not add to record
 			if (isComment(inputToString[lexIt]) && lexState != 1) {
 				lexState = 1;
-				cout << "yeet1 ";//Found first !
 				while (lexState == 1) {
 					lexIt++;
 					if (inputToString[lexIt] == '!') {
 						lexIt++;
 						lexState = 0;
-						cout << "yeet2 " << "current letter is " << inputToString[lexIt] << " and state is " << lexState << endl << endl;//Found second !
-						break;
 					}
 				}
 			}//isComment loop
-
 			
 
+			//Check if reading in an alpha; Build record for either identifier or keyword
+			//Uses bool checks to know when to finish record
 			if (isAlpha(inputToString[lexIt]) && lexState == 0) {
 				lexState = 2;
 				while (lexState == 2) {
 					lexBuilder+=inputToString[lexIt];
 					lexIt++;
 					if (isKeyword(lexBuilder)) {
-						cout << "|full word is " << lexBuilder << endl;
+						//cout << "|full word is " << lexBuilder << endl;
 						addToLexerTable("keyword", lexBuilder);
 						lexState = 0;
 						goto START;
 					}
 					if (inputToString[lexIt-1] == '$') {
-						cout << "|full word is " << lexBuilder << endl;
+						//cout << "|full word is " << lexBuilder << endl;
 						addToLexerTable("identifier", lexBuilder);
 						lexState = 0;
 						goto START;
 					}
 					if (isSeparator(inputToString[lexIt])) {
-						cout << "|full word is " << lexBuilder << endl;
+						//cout << "|full word is " << lexBuilder << endl;
 						addToLexerTable("identifier", lexBuilder);
 						lexState = 0;
 						goto START;
 					}
 					if (isOperator(inputToString[lexIt])) {
-						cout << "|full word is " << lexBuilder << endl;
-						cout << "|operator is " << inputToString[lexIt] << endl;
+						//cout << "|full word is " << lexBuilder << endl;
 						addToLexerTable("identifier", lexBuilder);
-						addToLexerTable("operator", inputToString[lexIt]);
 						lexState = 0;
 						goto START;
 					}
 				}//End of lexState == 2 while loop
 			}//End of isAlpha && lexState == 0 
 
-			if (isSeparator(inputToString[lexIt]) && lexState == 0) {
+
+			//Check if reading in a numeric; Build record for either a numeric or float
+			//Use bool checks to know when to finish a record
+			if (isNumeric(inputToString[lexIt]) && lexState == 0) {
 				lexState = 3;
+				bool isFloat = false;
 				while (lexState == 3) {
 					lexBuilder += inputToString[lexIt];
-					cout << "|separator is " << lexBuilder << endl;
+					if (inputToString[lexIt] == '.') {
+						isFloat = true;
+					}
+					lexIt++;
+					if (isAlpha(inputToString[lexIt]) && isFloat == false) {
+						//cout << "|full numeric is " << lexBuilder << endl;
+						addToLexerTable("numeric", lexBuilder);
+						lexState = 0;
+						goto START;
+					}
+					if (isSeparator(inputToString[lexIt]) && isFloat == false) {
+						//cout << "|full numeric is " << lexBuilder << endl;
+						addToLexerTable("numeric", lexBuilder);
+						lexState = 0;
+						goto START;
+					}
+					if (isOperator(inputToString[lexIt]) && isFloat == false) {
+						//cout << "|full numeric is " << lexBuilder << endl;
+						addToLexerTable("numeric", lexBuilder);
+						lexState = 0;
+						goto START;
+					}
+					if (isAlpha(inputToString[lexIt]) && isFloat == true) {
+						//cout << "|full real is " << lexBuilder << endl;
+						addToLexerTable("real", lexBuilder);
+						lexState = 0;
+						goto START;
+					}
+					if (isSeparator(inputToString[lexIt]) && isFloat == true) {
+						//cout << "|full real is " << lexBuilder << endl;
+						addToLexerTable("real", lexBuilder);
+						lexState = 0;
+						goto START;
+					}
+					if (isOperator(inputToString[lexIt]) && isFloat == true) {
+						//cout << "|full real is " << lexBuilder << endl;
+						addToLexerTable("real", lexBuilder);
+						lexState = 0;
+						goto START;
+					}
+				}//End of lexState = 3 while loop
+			}//End of isNumeric && lexState ==0
+
+
+			//Check if reading in a separator; Build record for the separator
+			if (isSeparator(inputToString[lexIt]) && lexState == 0) {
+				lexState = 4;
+				while (lexState == 4) {
+					lexBuilder += inputToString[lexIt];
+					//cout << "|separator is " << lexBuilder << endl;
 					addToLexerTable("separator", lexBuilder);
 					lexIt++;
 					lexState = 0;
 					goto START;
-				}
-			}
+				}//End of lexState == 3 while loop
+			}//End of isSeparator && lexState == 0
 
 
-			
+			//Check if reading in an operator; Build record for the operator
+			if (isOperator(inputToString[lexIt]) && lexState == 0) {
+				lexState = 5;
+				while (lexState == 5) {
+					lexBuilder += inputToString[lexIt];
+					//cout << "|operator is " << lexBuilder << endl;
+					addToLexerTable("operator", lexBuilder);
+					lexIt++;
+					lexState = 0;
+					goto START;
+				}//End of lexState == 5 while loop
+			}//End of isOperator && lexState == 5
+
+
 		}//lexIt loop
 		
+
 	}//End of lexer function
 
 
-	//Add an entry to the recordTable
+	//Add an entry to the recordTable using a string lexeme
 	void addToLexerTable(string token, string lexeme) {
 		lexRecord temp;
 		temp.token = token;
@@ -206,6 +274,7 @@ public:
 		entryCount++;
 	}
 
+	//Add an entry to the recordTable using a char lexeme
 	void addToLexerTable(string token, char lexeme) {
 		lexRecord temp;
 		temp.token = token;
@@ -225,7 +294,7 @@ public:
 private:
 	lexRecord recordTable[256];//Table holding lexer records
 	int entryCount = 0;//Counter to track current entries
-	string _fileName;
+	string _fileName;//Hold name of file input
 };
 
 
@@ -237,39 +306,6 @@ int main() {
 	cout << endl << endl << "Lexer table" << endl << endl;
 	tableOne.printLexerTable();
 
-	/*cout << endl << endl << isKeyword("yeet") << endl << isKeyword("int");*/
-
-	cout << endl << endl << "testing stuff below" << endl;
-
-
-	char testChar = 't';
-	cout << endl << "test isSeparator " << isSeparator(testChar) << endl;
-	cout << endl << "test isSeparator " << isSeparator('t') << endl;
-	cout << endl << "test isSeparator " << isSeparator(',') << endl;
-
-
-	//While loop takes precedence over For; while loops itself until broken
-	int state = 0;
-	for (int i = 0; i < 10; i++) {
-		while (state == 0) {
-			cout << i;
-			i += 2;
-			if (i > 5) {
-				state = 1;
-			}
-		}
-		cout << i;
-	}
-
-	string test = "int";
-
-	cout << "keyword shit below" << endl;
-	cout << isKeyword("int");
-	cout << endl << isKeyword("if");// 0 = true
-	cout << endl << isKeyword("yeet");
-
-
-	
 
 
 	system("pause");
