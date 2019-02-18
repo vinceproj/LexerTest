@@ -48,13 +48,14 @@ bool isOperator(char inputChar) {
 		return false;
 }
 
-bool isKeyword(string inputString) {
-	if (inputString == "int" || "if" || "else" || "while" || "whileend") {
+bool isKeyword(string inputString) {//fix this shit with compares
+	if (inputString.compare("int")==0 || inputString.compare("if")== 0 || inputString.compare("else")==0 || inputString.compare("while") == 0 || inputString.compare("whileend") == 0 || inputString.compare("float") == 0
+		|| inputString.compare("double") == 0 || inputString.compare("real") == 0) {
 		return true;
 	}
 	else
 		return false;
-}
+}//.compare for string
 
 
 struct lexRecord {
@@ -100,14 +101,17 @@ public:
 		int lexArraySize = 0;
 		string inputToString;
 		string lexBuilder;
+		
 
 		//Read through file; Remove all whitespace; Place all char into a char array
 		while (inputFile.peek() != EOF) {
 			string token;
 			inputFile >> token;
 			inputToString.append(token);
+			
 		}
-		cout << inputToString;
+		cout << inputToString << endl;
+		
 
 		lexArraySize = inputToString.length();
 		for (int lexIt = 0; lexIt < lexArraySize; lexIt++) {
@@ -128,24 +132,25 @@ public:
 				}
 			}//isComment loop
 
-			//if (isAlpha(inputToString[lexIt]) && lexState == 0) {//New token + isAlpha
-			//	lexState = 2;
+			if (isAlpha(inputToString[lexIt]) && lexState == 0) {//New token + isAlpha
+				lexState = 2;
 
-			//	while (lexState == 2){
-			//		lexBuilder+=inputToString[lexIt];
-			//		cout << lexBuilder << " ";
-			//		if (isKeyword(lexBuilder)) {
-			//			cout << lexBuilder << " " << lexIt << "+yeet6";
-			//			break;
-			//		}
-			//		lexIt++;
-			//		//lexState = 0;
-			//		//lexBuilder.clear();
-			//		//break;
-			//	}
-			//}
+				while (lexState == 2){
+					lexBuilder+=inputToString[lexIt];
+					if (isKeyword(lexBuilder)) {
+						cout << lexBuilder << " " << lexIt << "+yeet6";
+						break;
+					}
 
+					lexState = 0;
+					//lexBuilder.clear();
+					//break;
+				}
+			}
 
+			
+
+			
 			//cout << lexIt << " ";
 		}//lexIt loop
 		
@@ -183,21 +188,31 @@ int main() {
 	tableOne.lexer("lex_input.txt");
 	tableOne.printLexerTable();
 
-	cout << endl << endl << isKeyword("yeet");
+	/*cout << endl << endl << isKeyword("yeet") << endl << isKeyword("int");*/
+
+	cout << endl << endl << "testing stuff below" << endl;
 
 
 	//While loop takes precedence over For; while loops itself until broken
-	/*int state = 0;
+	int state = 0;
 	for (int i = 0; i < 10; i++) {
 		while (state == 0) {
 			cout << i;
-			i+=2;
+			i += 2;
 			if (i > 5) {
 				state = 1;
 			}
 		}
 		cout << i;
-	}*/
+	}
+
+	string test = "int";
+
+	cout << "keyword shit below" << endl;
+	cout << isKeyword("int");
+	cout << endl << isKeyword("if");// 0 = true
+	cout << endl << isKeyword("yeet");
+
 
 	////open file 
 	//ifstream inputFile;
