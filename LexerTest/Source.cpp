@@ -79,9 +79,9 @@ public:
 	State 0 = Building new record
 	State 1 = Reading through comment
 	State 2 = Reading an alpha for identifier
-	State 3 = Reading numeric for use
+	State 3 = Encountered separator
+	State X = Reading numeric
 	State 4 = Encountered operator
-	State 5 = Encountered separator
 	State 6 = Encountered keyword
 	State 7 = Encountered identifier
 	*/
@@ -163,9 +163,7 @@ public:
 					}
 					if (isSeparator(inputToString[lexIt])) {
 						cout << "|full word is " << lexBuilder << endl;
-						cout << "|separator is " << inputToString[lexIt] << endl;
 						addToLexerTable("identifier", lexBuilder);
-						addToLexerTable("separator", inputToString[lexIt]);
 						lexState = 0;
 						goto START;
 					}
@@ -180,7 +178,17 @@ public:
 				}//End of lexState == 2 while loop
 			}//End of isAlpha && lexState == 0 
 
-
+			if (isSeparator(inputToString[lexIt]) && lexState == 0) {
+				lexState = 3;
+				while (lexState == 3) {
+					lexBuilder += inputToString[lexIt];
+					cout << "|separator is " << lexBuilder << endl;
+					addToLexerTable("separator", lexBuilder);
+					lexIt++;
+					lexState = 0;
+					goto START;
+				}
+			}
 
 
 			
