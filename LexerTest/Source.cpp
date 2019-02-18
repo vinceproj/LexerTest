@@ -7,9 +7,13 @@ using namespace std;
 #define FILE_ERROR 2
 
 bool isAlpha(char inputChar) {
-	if (inputChar == 'A' || 'B' || 'C' || 'D' || 'E' || 'F' || 'G' || 'H' || 'I' || 'J' || 'K' || 'L' || 'M' || 'N' || 'O' || 'P' || 'Q' || 'R' || 'S' || 'T' || 'U' || 'V' || 'W' ||
-		'X' || 'Y' || 'Z' || 'a' || 'b' || 'c' || 'd' || 'e' || 'f' || 'g' || 'h' || 'i' || 'j' || 'k' || 'l' || 'm' || 'n' || 'o' || 'p' || 'q' || 'r' || 's' || 't' || 'u' || 'v' || 'w' ||
-		'x' || 'y' || 'z' || '$') {
+	if (inputChar == 'A' || inputChar == 'B' || inputChar == 'C' || inputChar == 'D' || inputChar == 'E' || inputChar == 'F' || inputChar == 'G' || inputChar == 'H' ||
+		inputChar == 'I' || inputChar == 'J' || inputChar == 'K' || inputChar == 'L' || inputChar == 'M' || inputChar == 'N' || inputChar == 'O' || inputChar == 'P' ||
+		inputChar == 'Q' || inputChar == 'R' || inputChar == 'S' || inputChar == 'T' || inputChar == 'U' || inputChar == 'V' || inputChar == 'W' || inputChar == 'X' ||
+		inputChar == 'Y' || inputChar == 'Z' || inputChar == 'a' || inputChar == 'b' || inputChar == 'c' || inputChar == 'd' || inputChar == 'e' || inputChar == 'f' ||
+		inputChar == 'g' || inputChar == 'h' || inputChar == 'i' || inputChar == 'j' || inputChar == 'k' || inputChar == 'l' || inputChar == 'm' || inputChar == 'n' ||
+		inputChar == 'o' || inputChar == 'p' || inputChar == 'q' || inputChar == 'r' || inputChar == 's' || inputChar == 't' || inputChar == 'u' || inputChar == 'v' ||
+		inputChar == 'w' || inputChar == 'x' || inputChar == 'y' || inputChar == 'z' || inputChar == '$') {
 		return true;
 	}
 	else
@@ -25,7 +29,8 @@ bool isComment(char inputChar) {
 }
 
 bool isNumeric(char inputChar) {
-	if (inputChar == '0' || '1' || '2' || '3' || '4' || '5' || '6' || '7' || '8' || '9') {
+	if (inputChar == '0' || inputChar == '1' || inputChar == '2' || inputChar == '3' || inputChar == '4' || inputChar == '5' || inputChar == '6' ||
+		inputChar == '7' || inputChar == '8' || inputChar == '9') {
 		return true;
 	}
 	else
@@ -33,7 +38,7 @@ bool isNumeric(char inputChar) {
 }
 
 bool isSeparator(char inputChar) {
-	if (inputChar == '(' || ')' || ',' || ';' || '{' || '}') {
+	if (inputChar == '(' || inputChar == ')' || inputChar == ',' || inputChar == ';' || inputChar == '{' || inputChar == '}'){
 		return true;
 	}
 	else
@@ -41,7 +46,7 @@ bool isSeparator(char inputChar) {
 }
 
 bool isOperator(char inputChar) {
-	if (inputChar == '+' || '-' || '*' || '/' || '%' || '<' || '>') {
+	if (inputChar == '+' || inputChar == '-' || inputChar == '*' || inputChar == '/' || inputChar == '%' || inputChar == '<' || inputChar == '>' || inputChar == '=') {
 		return true;
 	}
 	else
@@ -49,13 +54,14 @@ bool isOperator(char inputChar) {
 }
 
 bool isKeyword(string inputString) {//fix this shit with compares
-	if (inputString.compare("int")==0 || inputString.compare("if")== 0 || inputString.compare("else")==0 || inputString.compare("while") == 0 || inputString.compare("whileend") == 0 || inputString.compare("float") == 0
-		|| inputString.compare("double") == 0 || inputString.compare("real") == 0) {
+	if (inputString.compare("int")==0 || inputString.compare("if")== 0 || inputString.compare("else")==0 || inputString.compare("while") == 0 || inputString.compare("whileend") == 0 ||
+		inputString.compare("float") == 0|| inputString.compare("double") == 0 || inputString.compare("real") == 0) {
 		return true;
 	}
 	else
 		return false;
 }//.compare for string
+
 
 
 struct lexRecord {
@@ -116,7 +122,11 @@ public:
 		lexArraySize = inputToString.length();
 		for (int lexIt = 0; lexIt < lexArraySize; lexIt++) {
 			//Begin if/else series to tokenize
-			
+			//Use label to return to State 0 from area lower in loop without accruing an extra lexIt++
+			//Reset token building tools
+		START:
+			lexState = 0;
+			lexBuilder.clear();
 			//Check if reading in a comment; Iterate through comment portion; Do not add to record
 			if (isComment(inputToString[lexIt]) && lexState != 1) {
 				lexState = 1;
@@ -126,32 +136,54 @@ public:
 					if (inputToString[lexIt] == '!') {
 						lexIt++;
 						lexState = 0;
-						cout << "yeet2 ";//Found second !
+						cout << "yeet2 " << "current letter is " << inputToString[lexIt] << " and state is " << lexState << endl << endl;//Found second !
 						break;
 					}
 				}
 			}//isComment loop
 
-			if (isAlpha(inputToString[lexIt]) && lexState == 0) {//New token + isAlpha
+			
+
+			if (isAlpha(inputToString[lexIt]) && lexState == 0) {
 				lexState = 2;
-
-				while (lexState == 2){
+				while (lexState == 2) {
 					lexBuilder+=inputToString[lexIt];
+					lexIt++;
 					if (isKeyword(lexBuilder)) {
-						cout << lexBuilder << " " << lexIt << "+yeet6";
-						break;
+						cout << "|full word is " << lexBuilder << endl;
+						addToLexerTable("keyword", lexBuilder);
+						lexState = 0;
+						goto START;
 					}
+					if (inputToString[lexIt-1] == '$') {
+						cout << "|full word is " << lexBuilder << endl;
+						addToLexerTable("identifier", lexBuilder);
+						lexState = 0;
+						goto START;
+					}
+					if (isSeparator(inputToString[lexIt])) {
+						cout << "|full word is " << lexBuilder << endl;
+						cout << "|separator is " << inputToString[lexIt] << endl;
+						addToLexerTable("identifier", lexBuilder);
+						addToLexerTable("separator", inputToString[lexIt]);
+						lexState = 0;
+						goto START;
+					}
+					if (isOperator(inputToString[lexIt])) {
+						cout << "|full word is " << lexBuilder << endl;
+						cout << "|operator is " << inputToString[lexIt] << endl;
+						addToLexerTable("identifier", lexBuilder);
+						addToLexerTable("operator", inputToString[lexIt]);
+						lexState = 0;
+						goto START;
+					}
+				}//End of lexState == 2 while loop
+			}//End of isAlpha && lexState == 0 
 
-					lexState = 0;
-					//lexBuilder.clear();
-					//break;
-				}
-			}
+
+
 
 			
-
-			
-			//cout << lexIt << " ";
 		}//lexIt loop
 		
 	}//End of lexer function
@@ -166,10 +198,18 @@ public:
 		entryCount++;
 	}
 
+	void addToLexerTable(string token, char lexeme) {
+		lexRecord temp;
+		temp.token = token;
+		temp.lexeme = lexeme;
+		recordTable[entryCount] = temp;
+		entryCount++;
+	}
+
 	//Output current entries in the recordTable
 	void printLexerTable() {
 		for (int i = 0; i < entryCount; i++) {
-			cout << recordTable[i].token + " " + recordTable[i].lexeme;
+			cout << recordTable[i].token + " " + recordTable[i].lexeme << endl;
 		}
 	}
 
@@ -186,11 +226,18 @@ int main() {
 
 	lexerTable tableOne;
 	tableOne.lexer("lex_input.txt");
+	cout << endl << endl << "Lexer table" << endl << endl;
 	tableOne.printLexerTable();
 
 	/*cout << endl << endl << isKeyword("yeet") << endl << isKeyword("int");*/
 
 	cout << endl << endl << "testing stuff below" << endl;
+
+
+	char testChar = 't';
+	cout << endl << "test isSeparator " << isSeparator(testChar) << endl;
+	cout << endl << "test isSeparator " << isSeparator('t') << endl;
+	cout << endl << "test isSeparator " << isSeparator(',') << endl;
 
 
 	//While loop takes precedence over For; while loops itself until broken
@@ -214,39 +261,7 @@ int main() {
 	cout << endl << isKeyword("yeet");
 
 
-	////open file 
-	//ifstream inputFile;
-
-	////check if file opened properlu
-	//inputFile.open("lex_input.txt");
-	//if (!inputFile.is_open()) {
-	//	cerr << "Could not open file!" << endl;
-	//	system("pause");
-	//	exit(FILE_ERROR);
-	//}
-
-	////string to hold all inputs
-	////read all chars w/o whitespace into string var
-	////print string var
-	//string test;
-	//while (inputFile.peek() != EOF) {
-	//	string token;
-	//	inputFile >> token;
-	//	cout << token <<" ";
-	//	test.append(token + " ");
-	//}
-	//
-	//cout << endl << endl << "new shit" << endl << endl;
-
-	//lexerTable tableOne;
-	//lexRecord testOne;
-	//testOne.token = "poop";
-	//testOne.lexeme = "nugget";
-	//tableOne.addToLexerTable(testOne);
-	//tableOne.printLexerTable();
-	//
-	//tableOne.lexer("lex_input.txt");
-	//cout << endl << endl << "more shit" << endl;
+	
 
 
 	system("pause");
