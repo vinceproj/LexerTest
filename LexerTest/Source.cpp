@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -90,10 +91,12 @@ public:
 	//Use lexer func with fileName to generate a list of lexRecords
 	void lexer(string fileName) {
 		//Open and validates input file
+		//Store values for export file
 		ifstream inputFile;
 		inputFile.open(fileName);
 		if (inputFile.is_open()) {
-			_fileName = fileName;
+			_fileName.append(fileName);
+			_isOpen = true;
 		}
 
 		//Check if inputFile is valid
@@ -153,27 +156,23 @@ public:
 					lexBuilder+=inputToString[lexIt];
 					lexIt++;
 					if (isKeyword(lexBuilder)) {
-						//cout << "|full word is " << lexBuilder << endl;
 						addToLexerTable("keyword", lexBuilder);
 						lexState = 0;
 						goto START;
 					}
 					if (inputToString[lexIt-1] == '$') {
-						//cout << "|full word is " << lexBuilder << endl;
 						addToLexerTable("identifier", lexBuilder);
 						lexState = 0;
 						goto START;
 					}
 					if (isSeparator(inputToString[lexIt])) {
-						//cout << "|full word is " << lexBuilder << endl;
 						addToLexerTable("identifier", lexBuilder);
-						lexState = 0;
+						lexState = 4;
 						goto START;
 					}
 					if (isOperator(inputToString[lexIt])) {
-						//cout << "|full word is " << lexBuilder << endl;
 						addToLexerTable("identifier", lexBuilder);
-						lexState = 0;
+						lexState = 5;
 						goto START;
 					}
 				}//End of lexState == 2 while loop
@@ -192,39 +191,33 @@ public:
 					}
 					lexIt++;
 					if (isAlpha(inputToString[lexIt]) && isFloat == false) {
-						//cout << "|full numeric is " << lexBuilder << endl;
 						addToLexerTable("numeric", lexBuilder);
 						lexState = 0;
 						goto START;
 					}
 					if (isSeparator(inputToString[lexIt]) && isFloat == false) {
-						//cout << "|full numeric is " << lexBuilder << endl;
 						addToLexerTable("numeric", lexBuilder);
-						lexState = 0;
+						lexState = 4;
 						goto START;
 					}
 					if (isOperator(inputToString[lexIt]) && isFloat == false) {
-						//cout << "|full numeric is " << lexBuilder << endl;
 						addToLexerTable("numeric", lexBuilder);
-						lexState = 0;
+						lexState = 5;
 						goto START;
 					}
 					if (isAlpha(inputToString[lexIt]) && isFloat == true) {
-						//cout << "|full real is " << lexBuilder << endl;
 						addToLexerTable("real", lexBuilder);
 						lexState = 0;
 						goto START;
 					}
 					if (isSeparator(inputToString[lexIt]) && isFloat == true) {
-						//cout << "|full real is " << lexBuilder << endl;
 						addToLexerTable("real", lexBuilder);
-						lexState = 0;
+						lexState = 4;
 						goto START;
 					}
 					if (isOperator(inputToString[lexIt]) && isFloat == true) {
-						//cout << "|full real is " << lexBuilder << endl;
 						addToLexerTable("real", lexBuilder);
-						lexState = 0;
+						lexState = 5;
 						goto START;
 					}
 				}//End of lexState = 3 while loop
@@ -232,11 +225,10 @@ public:
 
 
 			//Check if reading in a separator; Build record for the separator
-			if (isSeparator(inputToString[lexIt]) && lexState == 0) {
+			if (isSeparator(inputToString[lexIt]) && lexState == 0 || lexState == 4) {
 				lexState = 4;
 				while (lexState == 4) {
 					lexBuilder += inputToString[lexIt];
-					//cout << "|separator is " << lexBuilder << endl;
 					addToLexerTable("separator", lexBuilder);
 					lexIt++;
 					lexState = 0;
@@ -246,11 +238,10 @@ public:
 
 
 			//Check if reading in an operator; Build record for the operator
-			if (isOperator(inputToString[lexIt]) && lexState == 0) {
+			if (isOperator(inputToString[lexIt]) && lexState == 0 || lexState ==5) {
 				lexState = 5;
 				while (lexState == 5) {
 					lexBuilder += inputToString[lexIt];
-					//cout << "|operator is " << lexBuilder << endl;
 					addToLexerTable("operator", lexBuilder);
 					lexIt++;
 					lexState = 0;
@@ -283,18 +274,47 @@ public:
 		entryCount++;
 	}
 
+
 	//Output current entries in the recordTable
 	void printLexerTable() {
+		cout << setw(30) << left << "Token" << right << "Lexeme" << endl << endl;
 		for (int i = 0; i < entryCount; i++) {
-			cout << recordTable[i].token + " " + recordTable[i].lexeme << endl;
+			cout << setw(30);
+			cout << left << recordTable[i].token << right << recordTable[i].lexeme << endl;
 		}
 	}
 
 
+	//Create a txt file of the Lexer Table
+	void exportLexerTable() {
+		//Create variables for exporting use
+		ofstream lexerTable;
+		string temp = "lexOf";
+		string tempToken;
+		string tempLexeme;
+
+		//Set name of output file and create
+		temp.append(_fileName);
+		lexerTable.open(temp);
+
+		//Begin input to output file
+		lexerTable << "Token\t\t\tLexemes\n";
+		for (int i = 0; i < entryCount; i++) {
+			tempToken = recordTable[i].token;
+			if (tempToken.length() < 8) {
+				tempToken.append("\t");
+			}
+			tempLexeme = recordTable[i].lexeme;
+			lexerTable << tempToken << "\t=\t" << tempLexeme << endl;
+		}
+		
+	}
+
 private:
 	lexRecord recordTable[256];//Table holding lexer records
 	int entryCount = 0;//Counter to track current entries
-	string _fileName;//Hold name of file input
+	string _fileName;
+	bool _isOpen = false;//Validate input file
 };
 
 
@@ -303,8 +323,14 @@ int main() {
 
 	lexerTable tableOne;
 	tableOne.lexer("lex_input.txt");
-	cout << endl << endl << "Lexer table" << endl << endl;
 	tableOne.printLexerTable();
+	tableOne.exportLexerTable();
+
+
+	/*ofstream test;
+	string fileName = "waha.txt";
+	test.open(fileName);
+	test << "WAHAHAHA";*/
 
 
 
